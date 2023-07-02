@@ -1,0 +1,434 @@
+---
+title: "Redes Neuronales"
+author: "Daniela Cuesta - Paola Peralta Flores - Mariuxi Tenesaca"
+format: pdf
+editor: visual
+---
+
+El código lee un conjunto de datos desde un archivo llamado "wdbc.data" utilizando la función **`read.table()`**.
+
+```{r}
+dataset <- read.table(file = "wdbc.data", header = FALSE, sep = ",")
+head(dataset)
+```
+
+Se está convirtiendo una variable llamada "V2" en un factor en un conjunto de datos. Luego, se esta utilizando la función **`complete.cases()`** para verificar la cantidad de casos completos en ese conjunto de datos.
+
+```{r}
+# Convertir la columna "V2" a factor y asignarla a "clase"
+dataset$V2 <- as.factor(dataset$V2)
+length(complete.cases(dataset))
+```
+
+# [1. Descripción de los mismos numérica y gráficamente]{.underline}
+
+Se obtendra un resumen de cada columna o variable en el conjunto de datos. El resumen incluiría estadísticas descriptivas como el valor mínimo, el primer cuartil, la mediana, el tercer cuartil y el valor máximo para variables numéricas.
+
+```{r}
+summary(dataset)
+
+```
+
+La función **`str()`** proporciona un resumen conciso que incluye el nombre de cada variable, su tipo de dato y una vista previa de los primeros valores en cada columna.
+
+```{r}
+str(dataset)
+
+```
+
+```{r}
+# Crear el gráfico de boxplot
+boxplot(dataset[, -1], col = "lightblue", main = "Distribución de variables", 
+        xlab = "Variables", ylab = "Valores")
+```
+
+Este código generaría una ventana gráfica con 2 filas y 4 columnas, mostrando boxplots para las variables del conjunto de datos agrupadas de 5 en 5. Cada boxplot mostraría la distribución de los valores de las variables correspondientes.
+
+```{r}
+# Create a list with the variable names of the dataset
+variables <- names(dataset)[-2]  # Exclude the first column
+
+# Divide the variables into groups of 5
+grupos <- split(variables, ceiling(seq_along(variables) / 2))
+
+# Create a graphic window with 2 rows and 4 columns for the boxplots
+par(mfrow = c(2, 4))
+
+# Create the boxplots
+for (i in seq_along(grupos)) {
+  boxplot(dataset[, grupos[[i]]], col = "lightblue", main = paste("Boxplot", i),
+          xlab = "Variables", ylab = "Valores")
+}
+
+```
+
+# Interpretacion
+
+Estos gráficos muestran la distribución de los valores de las variables del primer grupo. Los cuartiles y la mediana se representan mediante los componentes de la caja, mientras que los valores mínimo y máximo se indican mediante los bigotes. También es posible identificar la presencia de valores atípicos o extremos mediante puntos individuales fuera de los bigotes.
+
+# [5. Realizar un modelo preliminar de una capa sobre la clasificacion begnigno o maligno]{.underline}
+
+# Transformación de los datos numéricos.
+
+La función **`normalize`** toma un vector y lo normaliza en el rango de 0 a 1, mientras que el código proporcionado aplica esta función a todas las columnas de un data frame, excepto a una columna específica, y guarda el resultado en un nuevo data frame llamado **`data_nrm`**.
+
+```{r}
+# custom normalization function
+normalize <- function(x) {
+return((x - min(x)) / (max(x) - min(x)))
+}
+data_nrm <- as.data.frame(lapply(dataset[,-2],normalize))
+```
+
+```{r}
+head(data_nrm)  # Ver los primeros registros del conjunto de data_nrm
+names(data_nrm)  # Ver los nombres de las columnas en el conjunto de data_nrm
+length(data_nrm)
+```
+
+Se obtendrá un resumen estadístico de todas las columnas de **`data_nrm`**
+
+```{r}
+summary(data_nrm)
+```
+
+Esta función devuelve el número de filas presentes en el data frame.
+
+```{r}
+nrow(dataset)
+nrow(data_nrm)
+
+```
+
+# Creación de variables binarias en lugar de usar la variable factor.
+
+Se asigna valores booleanos a dos columnas nuevas, "M" y "B", en un marco de datos llamado "data_nrm" basado en una condición en otra columna llamada "V2"
+
+```{r}
+data_nrm$M <- ifelse(dataset$V2 == "M", TRUE, FALSE)
+data_nrm$B <- ifelse(dataset$V2 == "B", TRUE, FALSE)
+
+```
+
+El código que proporcionaste utiliza la función **`boxplot()`** para crear gráficos de caja y bigotes (boxplots) de un marco de datos llamado **`data_nrm`**.
+
+```{r}
+par(mar = c(5, 5, 2, 2))  # Adjust the margin values (bottom, left, top, right)
+
+boxplot(data_nrm[, 1:11], main = 'Datos con escala [0,1]', col = 'brown', cex.axis = 0.4)
+abline(h = 0.5, lwd = 2)
+
+boxplot(data_nrm[, 12:22], main = 'Datos con escala [0,1]', col = 'brown', cex.axis = 0.4)
+abline(h = 0.5, lwd = 2)
+
+boxplot(data_nrm[, 23:31], main = 'Datos con escala [0,1]', col = 'brown', cex.axis = 0.4)
+abline(h = 0.5, lwd = 2)
+
+
+```
+
+# **Interpretacion**
+
+Los gráficos mostrados son gráficos de caja y bigotes que representan la distribución de las variables en el eje x, mientras que el eje y representa el rango de valores de 0 a 1.
+
+La caja en cada gráfico representa el rango que abarca desde el primer cuartil (25%) hasta el tercer cuartil (75%) de la distribución de los datos. La línea en el medio de la caja representa la mediana, que es el valor que divide los datos en dos partes iguales.
+
+El eje y que va de 0 a 1 muestra el rango de valores normalizado. Esto sugiere que las variables en **`data_nrm`** han sido escaladas o transformadas para que sus valores estén en el rango de 0 a 1, como parte de un proceso de normalización de datos.
+
+# Partición de los datos en training/test
+
+"n" contendrá el número total de filas en el marco de datos "data_nrm".
+
+```{r}
+n <- nrow(data_nrm)
+```
+
+Se realiza una división aleatoria del marco de datos "data_nrm" en un conjunto de entrenamiento y un conjunto de prueba.
+
+```{r}
+set.seed(123)  # Set a specific seed for reproducibility
+n_train <- floor(2/3 * nrow(data_nrm))
+
+train <- sample(nrow(data_nrm), n_train)
+data_nrm.train <- data_nrm[train, ]
+data_nrm.test <- data_nrm[-train, ]
+```
+
+```{r}
+head(data_nrm.test)  # Ver los primeros registros del conjunto de datos de prueba
+names(data_nrm.test)  # Ver los nombres de las columnas en el conjunto de datos de prueba
+length(data_nrm.test)
+
+
+```
+
+```{r}
+head(data_nrm.train)  # Ver los primeros registros del conjunto de datos de prueba
+names(data_nrm.train)  # Ver los nombres de las columnas en el conjunto de datos de prueba
+length(data_nrm.train)
+```
+
+# [6. Realizar un modelo preliminar de una capa sobre la clasificacion begnigno o maligno]{.underline}
+
+# Entrenamiento del modelo.
+
+Se instala y carga el paquete "neuralnet" para ajustar una red neuronal utilizando el marco de datos "data_nrm.train". Luego, se crea una red neuronal con una sola neurona oculta y se visualiza la topología de la red.
+
+```{r}
+install.packages("neuralnet")  # Instalar el paquete si no está instalado
+library(neuralnet)  # Cargar el paquete
+
+# Definir la fórmula utilizando los nombres de las variables en data_nrm.train
+fmla <- M + B ~ V1 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13 + V14 + V15 + V16 + V17 + V18 + V19 + V20 + V21 + V22 + V23 + V24 + V25 + V26 + V27 + V28 + V29 + V30 + V31 + V32
+
+# simple ANN with only a single hidden neuron
+data_model_1 <- neuralnet(fmla, data = data_nrm.train, hidden = 1, linear.output = FALSE)
+
+# visualize the network topology
+plot(data_model_1, rep = "best")
+
+
+
+```
+
+# Interpretacion
+
+La gráfica representa la estructura de la red neuronal, mostrando las capas de neuronas y las conexiones entre ellas, lo que brinda una visión general de cómo se está construyendo y organizando la red para el problema específico.asociado a la neurona de salida.
+
+```{r}
+#head(data_model_1)  # Ver los primeros registros del conjunto de datos de prueba
+#names(data_model_1)  # Ver los nombres de las columnas en el conjunto de datos de prueba
+#length(data_model_1)
+```
+
+# Predicción y evaluación del modelo
+
+Este código calcula las predicciones del modelo de red neuronal en los datos de prueba, convierte las salidas binarias en una salida categórica y crea una tabla de contingencia cruzada para comparar las predicciones con las clases reales. Esto proporciona una evaluación de la precisión del modelo en la clasificación de los datos de prueba.
+
+```{r}
+# Cargar el paquete caret
+library(caret)
+model_results_1 <- compute(data_model_1, data_nrm.test)$net.result
+# Put multiple binary output to categorical output
+maxidx <- function(arr) {
+return(which(arr == max(arr)))
+}
+idx <- apply(model_results_1, 1, maxidx)
+prediction <- c("M", "B")[idx]
+res <- table(prediction, dataset$V2[-train])
+# Results require(caret)
+(cmatrix1 <- confusionMatrix(res, positive = "M"))
+```
+
+# Interpretacion
+
+**Estadísticas:**
+
+-   Accuracy (Precisión): 0.9737. Indica la proporción de predicciones correctas en relación con el total de predicciones realizadas.
+
+-   Sensitivity (Sensibilidad): 0.9762. También conocido como tasa de verdaderos positivos o recall. Indica la proporción de casos positivos correctamente identificados.
+
+-   Specificity (Especificidad): 0.9717. Indica la proporción de casos negativos correctamente identificados.
+
+Estas estadísticas proporcionan una evaluación detallada del rendimiento del modelo de red neuronal. Indican una alta precisión (Accuracy) y un buen equilibrio entre sensibilidad y especificidad.
+
+# [7.Mejora del rendimiento del modelo]{.underline}
+
+```{r}
+install.packages("neuralnet")  # Instalar el paquete si no está instalado
+library(neuralnet)  # Cargar el paquete
+# simple ANN with only a single hidden neuron
+set.seed(123) # to guarantee repeatable results
+# Definir la fórmula utilizando los nombres de las variables en data_nrm.train
+fmla <- M + B ~ V1 + V3 + V4 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13 + V14 + V15 + V16 + V17 + V18 + V19 + V20 + V21 + V22 + V23 + V24 + V25 + V26 + V27 + V28 + V29 + V30 + V31 + V32
+
+data_model_3 <- neuralnet(fmla, data = data_nrm.train, hidden = 3, linear.output = FALSE)
+# visualize the network topology
+plot(data_model_3, rep = "best")
+
+
+
+```
+
+# INTERPRETACION
+
+En la gráfica, cada círculo representa una capa de neuronas. Hay 3 circulos que indican 3 neuronas en cada capa oculta Por último, los 2 circulos representan la capa de salida, que en este caso tiene dos neuronas, una para la variable "M" y otra para la variable "B".
+
+```{r}
+model_results_3 <- compute(data_model_3, data_nrm.test)$net.result
+# Put multiple binary output to categorical output
+maxidx <- function(arr) {
+return(which(arr == max(arr)))
+}
+idx <- apply(model_results_3, 1, maxidx)
+prediction <- c("M", "B")[idx]
+res <- table(prediction, dataset$V2[-train])
+# Results require(caret)
+(cmatrix3 <- confusionMatrix(res, positive = "M"))
+```
+
+# Interpretacion
+
+**Estadísticas:**
+
+-   **Accuracy (Precisión):** 0.9842. Indica la proporción de predicciones correctas en relación con el total de predicciones realizadas.
+
+-   **Sensitivity (Sensibilidad):** 0.9881. También conocido como tasa de verdaderos positivos o recall. Indica la proporción de casos positivos correctamente identificados.
+
+**Specificity (Especificidad):** 0.9811. Indica la proporción de casos negativos correctamente identificados.
+
+# [8. Comparación de resultados mediante una matriz de confusión]{.underline}
+
+```{r}
+# Cargar el paquete caret
+library(caret)
+
+# Calcular la matriz de confusión para el modelo data_model_1
+model_results_1 <- compute(data_model_1, data_nrm.test)$net.result
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+idx <- apply(model_results_1, 1, maxidx)
+prediction <- c("M", "B")[idx]
+res <- table(prediction, dataset$V2[-train])
+cmatrix1 <- confusionMatrix(res, positive = "M")
+
+# Calcular la matriz de confusión para el modelo data_model_3
+model_results_3 <- compute(data_model_3, data_nrm.test)$net.result
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+idx <- apply(model_results_3, 1, maxidx)
+prediction <- c("M", "B")[idx]
+res <- table(prediction, dataset$V2[-train])
+cmatrix3 <- confusionMatrix(res, positive = "M")
+
+# Comparar las matrices de confusión
+cmatrix1
+cmatrix3
+
+```
+
+# Interpretacion
+
+Al comparar las dos matrices de confusión, se pueden observar las siguientes diferencias:
+
+1.  Precisión (Accuracy): El modelo 3 tiene una mayor precisión (0.9842) en comparación con el modelo 1 (0.9737). Esto indica que el modelo 3 tiene una mayor proporción de predicciones correctas en general.
+
+2.  Sensibilidad (Sensitivity): El modelo 3 tiene una mayor sensibilidad (0.9881) en comparación con el modelo 1 (0.9762). Esto indica que el modelo 3 es mejor para detectar casos positivos (clase M) correctamente.
+
+3.  Especificidad (Specificity): Ambos modelos tienen una especificidad alta, pero el modelo 3 (0.9811) tiene una ligeramente mayor especificidad que el modelo 1 (0.9717). Esto indica que el modelo 3 es mejor para identificar casos negativos (clase B) correctamente.
+
+En general, el modelo 3 muestra un rendimiento ligeramente superior en términos de precisión, sensibilidad y especificidad en comparación con el modelo 1.
+
+# [2. Fortalezas y Debilidades del ANN perceptrón]{.underline}
+
+En el campo de las Redes Neuronales, el **perceptrón**, creado por Frank Rosenblatt se refiere a:
+
+-   La neurona artificial o unidad básica de inferencia en forma de discriminador lineal, a partir de lo cual se desarrolla un algoritmo capaz de generar un criterio para seleccionar un sub-grupo a partir de un grupo de componentes más grande.
+
+La limitación de este algoritmo es que si dibujamos en un gráfico estos elementos, se deben poder separar con un hiperplano únicamente los elementos "deseados" discriminándolos (separándolos) de los "no deseados".
+
+-   El perceptrón puede utilizarse con otros tipos de perceptrones o de neurona artificial, para formar una red neuronal artificial más compleja.
+
+    ### Fortalezas del perceptrón:
+
+    1.  **Simplicidad:** El perceptrón es un modelo de ANN simple y fácil de entender. Su estructura básica consiste en una sola capa de neuronas con conexiones directas entre ellas y una función de activación.
+
+    2.  **Eficiencia computacional:** Debido a su simplicidad, el perceptrón es computacionalmente eficiente en comparación con otros modelos más complejos de ANN.
+
+    3.  **Interpretación intuitiva:** Las conexiones directas entre las neuronas en el perceptrón permiten una interpretación intuitiva de su funcionamiento. Puede asociarse fácilmente una ponderación positiva a una característica que aumenta la salida y una ponderación negativa a una característica que disminuye la salida.
+
+    ### Debilidades del perceptrón:
+
+    1.  **Limitaciones en la capacidad de aprendizaje:** El perceptrón solo puede aprender a clasificar conjuntos de datos que sean linealmente separables. Esto significa que si los datos no pueden ser separados por una línea recta o un hiperplano, el perceptrón no será capaz de aprender correctamente.
+
+    2.  **Sensibilidad a ruido y datos atípicos:** El perceptrón puede ser sensible a datos ruidosos o atípicos. Si hay errores en los datos de entrenamiento, el perceptrón puede tener dificultades para converger hacia una solución correcta.
+
+    3.  **No puede resolver problemas no lineales:** Dado que el perceptrón se basa en una función de activación lineal, no puede resolver problemas no lineales de forma directa. Para abordar problemas no lineales, se requiere la utilización de redes neuronales más complejas, como las redes neuronales multicapa.
+
+# [**Funciones de activacion en REdes Neuronales (Activation Function)**]{.underline}
+
+Una neurona biológica puede estar activa (excitada) o inactiva (no excitada)
+
+-   Las neuronas artificiales también tienen diferentes estados de activación:
+
+-   Algunas de ellas solamente dos, al igual que las biológicas, pero otras pueden tomar cualquier valor dentro de un conjunto determinado.
+
+-   La función activación calcula el estado de actividad de una neurona, transformando la entrada global (menos el umbral, Θi ) en un valor (estado) de activación, cuyo rango normalmente va de (0 a 1) o de (--1 a 1).
+
+-   Esto es así, porque una neurona puede estar totalmente inactiva (0 o --1) o activa (1).
+
+La salida de una neurona puede incluir un filtro, una función de corte o un umbral que modifica el valor de salida o impone un umbral que debe superarse para continuar con otra neurona. Esta función se llama función de activación.
+
+![](fotofuncionactivacion.png){fig-align="center" width="455"}
+
+Así, las funciones de activación son funciones que transfieren información generada por combinaciones lineales de pesos y entradas, es decir, la forma en que se transfiere información a través de conexiones de salida.
+
+La información puede transmitirse sin transformación, función de identificación o sin transmisión. Dado que las redes neuronales tienen como objetivo resolver problemas cada vez más complejos, las funciones de activación a menudo hacen que el modelo no sea lineal.
+
+**La función activación**: Es una función de la entrada global (gini) menos el umbral (Θi ).
+
+Es decir, en las redes neuronales, las funciones de activación son utilizadas para introducir no linealidad en el modelo y permitir que la red pueda aprender y representar relaciones y patrones más complejos en los datos de entrada.
+
+-   Estas funciones se aplican a la salida de cada neurona en una capa y determinan si la neurona debe ser activada (disparar) o no.
+
+Existen diferentes tipos de funciones de activación que se utilizan en las redes neuronales, y cada una tiene características distintas.
+
+A continuación, se describen algunas de las funciones de activación más comunes:
+
+-   Función Escalón, (similar a la función binaria.)
+
+-   Fórmula de la función escalón
+
+-   Función Sigmoidal.
+
+-   Fórmula de la función sigmoidal
+
+-   Función Rectificadora (ReLU).
+
+-   Fórmula de la función rectificadora
+
+-   Función Tangente Hiperbólica.
+
+-   Fórmula de la función tangente hiperbólica
+
+-   Funciones de Base Radial. (Gausianas, multicuadráticas, multicuadráticas inversas)
+
+**Función de activación lineal**
+
+Esta función simplemente realiza una transformación lineal de la entrada y se define como f(x) = x. No introduce no linealidad y es útil en algunas capas de salida donde se desea obtener valores continuos.
+
+-   Ya no se usan en el Deep Learning, ya que la salida de las funciones no estará confinada entre ningún rango y la suma de diferentes funciones lineales sigue siendo una función lineal acotando así la activación de la neurona.
+
+***Funciones de activación no lineal***
+
+Son las usadas en las redes neuronales, como veremos a continuación estas funciones permiten un acotamiento de los datos de salida. Algunos ejemplos son la función sigmoide o tangente hiperbólica
+
+**Función de activación umbral (Step function)**
+
+Esta función es binaria y activa la neurona solo si la entrada supera un cierto umbral. Por ejemplo, la función escalón (step function) se define como f(x) = 1 si x \> 0, de lo contrario, f(x) = 0.
+
+**Función de activación sigmoide (Sigmoid)**
+
+La función sigmoide es una función logística que mapea cualquier valor real en un rango de 0 a 1. Ayuda a normalizar la salida de una neurona y se define como f(x) = 1 / (1 + exp(-x)).
+
+![](sigmoide.png){fig-align="center" width="417"}
+
+**Función de activación tangente hiperbólica (Tanh)**
+
+ La función tangente hiperbólica también realiza una normalización, pero mapea los valores reales en un rango de -1 a 1. Se define como f(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x)).
+
+![](tangente%20hiperbolica.png){fig-align="center" width="460"}
+
+**Función de activación ReLU (Rectified Linear Unit)**
+
+Esta función es no lineal y muy popular en las redes neuronales. La función ReLU es definida como f(x) = max(0, x), es decir, activa la neurona si la entrada es mayor que cero, de lo contrario, la desactiva.
+
+![](relu.png){fig-align="center" width="493"}
+
+**Función de activación Leaky ReLU**
+
+Es similar a la función ReLU, pero en lugar de ser cero cuando la entrada es menor o igual a cero, tiene una pendiente pequeña. La función Leaky ReLU se define como f(x) = max(0.01x, x).
+
+![](LEaky%20relu.png){fig-align="center" width="445"}
