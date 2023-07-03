@@ -1,0 +1,87 @@
+---
+title: "Algoritmos Tesis"
+format: pdf
+editor: visual
+author: María José Bustamante - Paola Peralta Flores
+---
+
+# Roboflow
+
+Es una plataforma de visión artificial que permite a los usuarios crear modelos de visión artificial de forma más rápida y precisa mediante la provisión de mejores técnicas de recopilación de datos, preprocesamiento y formación de modelos. Permite a los usuarios cargar conjuntos de datos personalizados, dibujar anotaciones, modificar orientaciones de imágenes, cambiar el tamaño de imágenes, modificar el contraste de imágenes y realizar aumentos de datos. También se puede utilizar para entrenar modelos. Ha evolucionado al uso de técnicas de Machine Learning como:
+
+1.  Region Proposals (R-CNN, Fast R-CNN, Faster R-CNN, etc.)
+2.  You Only Look Once (YOLO)
+3.  Single Shot MultiBox Detector (SSD)
+4.  Retina-Net
+
+## Model Predict Segmentation
+
+La segmentación de imágenes, es la tarea de visión artificial de reconocer objetos en imágenes junto con su forma asociada. Es una extensión de la detección de objetos donde cada predicción también incluye una forma en lugar de solo un cuadro delimitador definido por un punto central, ancho y alto.
+
+Con la segmentación, su aplicación puede determinar la cantidad de objetos en una imagen, las clasificaciones y su contorno.
+
+![](images/Screenshot%20from%202023-07-02%2015-31-42.png){fig-align="center" width="364"}
+
+Utilizamos un modelo de predicción para realizar las segmentaciones de la lengua de cada una de las imágenes con las que se va a trabajar.
+
+![Imagen de lengua segmentada](images/Screenshot%20from%202023-07-02%2019-49-45.png){fig-alt="Imagen de lengua segmentada" fig-align="center" width="325"}
+
+## Yolo 8
+
+El algoritmo 'You Only Look Once' (YOLO) logró reconocer objetos en imágenes/videos en tiempo real. Este éxito hizo popular el formato de anotación y, a medida que se desarrollaron nuevas variantes del algoritmo, sus respectivos formatos de anotación YOLO también ganaron popularidad.
+
+![](images/Screenshot%20from%202023-07-02%2015-41-20.png){fig-align="center" width="209"}
+
+En este caso utilizamos el yolov8n.pt para el entrenamiento y luego realiza las predicciones de reconocer la lengua, en cada una de las carcateríticas que necesitamos, en este caso son una lengua normal, fisurada y con bordes marcados por dientes.
+
+![](images/Screenshot%20from%202023-07-02%2015-39-41.png){fig-align="center" width="411"}
+
+![Lengua clasificada como bordes con dientes marcados](images/Screenshot%20from%202023-07-02%2019-52-05.png){fig-align="center" width="253"}
+
+# OpenCV
+
+Contiene implementaciones de más de 2500 algoritmos. Además está disponible de forma gratuita para fines comerciales y académicos. Las posibilidades de análisis y tratamiento de imágenes con la biblioteca OpenCV son inmensas, desde detectar caras y clasificarlas según género hasta crear modelos de realidad aumentada o usar clasificadores para detectar objetos.
+
+En este caso, usamos la librería de OpenCv para realizar el recorte de una imagen segmentada con anterioridad. En la imagen se muestra, como se utiliza esta librería con algunos de sus algorirtmos para lograr el recorte de nuestra imagen segmentada y dejarla solo con un fondo blanco.
+
+![](images/Screenshot%20from%202023-07-02%2015-34-03.png){fig-align="center" width="558"}
+
+El recorte de la imagen lo realizamos, ya que el siguiente paso en encontrar tanto el color dominante como una paleta de colores de la lengua y el área de labios o dientes puede interferir en estos resultados.
+
+![Lengua recortada con fondo blanco para poder relizar los siguientes pasos.](images/Screenshot%20from%202023-07-02%2019-55-14.png){fig-align="center" width="151"}
+
+# K - means
+
+Es un algoritmo de clasificación no supervisada (clusterización) que agrupa objetos en *k* grupos basándose en sus características. El agrupamiento se realiza minimizando la suma de distancias entre cada objeto y el centroide de su grupo o cluster.
+
+El algoritmo *k-means* resuelve un **problema de optimización**, siendo la función a optimizar (minimizar) la suma de las distancias cuadráticas de cada objeto al centroide de su cluster.
+
+![](images/Screenshot%20from%202023-07-02%2020-15-16.png){fig-align="center" width="464"}
+
+![](images/Screenshot%20from%202023-07-02%2020-17-55.png){fig-align="center" width="468"}
+
+En este caso utilizamos el algoritmo para detectar la saburra de le lengua y encontrar su porcentaje, también antes de aplicar este algoritmo se tranformó la imagen a espacio de color lab.
+
+![Saburra detetctada en la lengua (blanco)](images/Screenshot%20from%202023-07-02%2020-02-48.png){alt="Saburra detetctada en la lengua (blanco)" fig-align="center" width="148"}
+
+# Fortalezas
+
+Trabajar con algoritmos de inteligencia artificial tiene ventajas, como:
+
+1.  Automatización y eficiencia: Aumentar la eficiencia y la productividad. Realiza tareas repetitivas y tediosas de manera más rápida y precisa, liberando tiempo y recursos.
+
+2.  Toma de decisiones basada en datos: Analiza grandes volúmenes de datos y extrae información relevante para la toma de decisiones. Identifica patrones, tendencias y correlaciones para mejorar la precisión de las decisiones y optimizar los resultados.
+
+3.  Personalización y experiencia del usuario: Se adapta y personaliza según las preferencias y necesidades individuales.
+
+# Debilidades
+
+La majyor debilidad que se presenta es el hecho de entender el fncionamiento de cada algoritmo para poder aplicarlo de anera correcta. A continuación se presentan otras debilidades comunes:
+
+1.  Dependencia de datos de calidad: Los algoritmos de IA requieren grandes cantidades de datos de alta calidad para entrenar y funcionar de manera efectiva. Si los datos utilizados están desactualizados, incompletos, sesgados o incorrectos, esto puede afectar la precisión y confiabilidad de los resultados obtenidos.
+
+2.  Falta de comprensión y explicabilidad: Algunos algoritmos de IA, como las redes neuronales profundas, pueden ser altamente complejos y difíciles de entender y explicar cómo llegan a sus resultados.
+
+3.  Falta de contexto y sentido común: Los algoritmos de IA pueden tener dificultades para comprender el contexto y aplicar el sentido común en ciertas situaciones. Pueden tomar decisiones basadas únicamente en los patrones y datos con los que fueron entrenados, sin considerar factores externos relevantes. Esto puede llevar a resultados inesperados o inapropiados en situaciones no previstas.
+
+4.  Privacidad y seguridad de los datos: El uso de algoritmos de IA implica la recopilación y el análisis de grandes cantidades de datos, lo que plantea preocupaciones sobre la privacidad y la seguridad. Si los datos almacenados o utilizados por los algoritmos no se protegen adecuadamente, pueden surgir riesgos de violaciones de datos y compromiso de la privacidad.
